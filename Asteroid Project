@@ -1,0 +1,435 @@
+PFont font;
+PImage ceu;
+
+int vida;
+int vidaa = 3;
+int vida2;
+int tempo;
+boolean MEF;
+
+Button startbutton;
+Tiro tiros;
+Nave a;
+Power_up powers;
+//Power_up[] power_up = new Power_up[1];
+//Meteoro[] meteoro = new Meteoro[10];
+ArrayList<Meteoro> meteoro = new ArrayList<Meteoro>();
+ArrayList<Tiro> tiro = new ArrayList<Tiro>();
+ArrayList<Power_up> power_up = new ArrayList<Power_up>();
+
+boolean start=false;
+int ponto, ponto2;
+
+void setup() {
+  size(600, 400);
+  ellipseMode(CENTER);
+  noStroke();
+
+  font = createFont("atari-abandoned.ttf", 25);
+  ceu = loadImage("Ceu.jpg");
+
+  startbutton = new Button(width/5*2.2, height/7*4, 130, 40, 255);
+
+  a = new Nave(300, 400);//x e y da nave;
+}
+
+void draw() {
+  background(0);
+
+  if (start == false) {
+    titulo();
+    startbutton.Colour = 255;
+    startbutton.update();
+    startbutton.render();
+
+    if (startbutton.isClicked()) {
+      startbutton.Colour = 0;
+      //b_music.play();
+      //music.stop();
+      start = true;
+    }
+  } else {
+    image(ceu, 0, 0, 600, 400);
+    jogando();
+  }
+}
+
+void keyPressed() {
+  if (key == ' ') {
+    tiro.add(new Tiro(a.x+10, a.y));
+    if (MEF == true) {
+      tiro.add(new Tiro(a.x+30, a.y));
+    }
+  }
+}
+
+void jogando() {
+
+  mostra_Ponto();
+  mostra_Vida();
+  colisao_tiro();
+  cria_meteoro();
+  
+  //Aparecer Power UP
+  tempo = (int) random(0, 80);
+  if (tempo==5) {
+    power_up.add(new Power_up(2, 2));
+  }
+
+  a.mostra_nave();
+
+  for (int i=0; i<meteoro.size(); i++) {
+    meteoro.get(i).mostra_Meteoro();
+    if (meteoro.get(i).y > height) {
+      meteoro.remove(i);
+    }
+
+    if (meteoro.get(i).collision(a)) {
+      vida2++;
+      print("colisao");
+      if (vida2 >=20) {
+        vida2 = 0;
+        vidaa--;
+      }
+    }
+  }
+  //verifica todos os powers up
+  for (int b=0; b<power_up.size(); b++) {
+    power_up.get(b).mostra_Power_up();
+
+    if (power_up.get(b).collision(a)) {
+      int sorteio = (int) random(0, 2);
+      
+      if (sorteio == 0) {        
+        //booleana interna da classe
+        a.cor_A = true;
+      } 
+      else if (sorteio == 1) {
+        for (int j=0; j<meteoro.size(); j++) {
+        //booleana interna da classe
+          meteoro.get(j).cor_A = true;
+        }
+      }
+      power_up.remove(b);
+      print("colisao");
+      if (vida2 >=20) {
+        vida2 = 0;
+        vidaa--;
+      }
+    }
+  }
+}
+
+void mostra_Ponto() {
+  fill(255);
+  textSize(15);
+  text("Pontos: " + ponto, 50, 50);
+}
+void mostra_Vida() {
+  fill(255);
+  textSize(15);
+  text("Vidas: " + vidaa, 450, 50);
+}
+void colisao_tiro() {
+
+  for (int i=0; i<tiro.size(); i++) {
+    tiros = tiro.get(i);
+    tiros.mostra_Tiro();
+    tiros.move();
+
+    for (int j=0; j<meteoro.size(); j++) {
+      if (tiro.get(i).hits(meteoro.get(j)) == true) {
+        println("BOOOOM");
+        ponto++;
+        meteoro.get(j).mostra = false;
+        if (meteoro.get(j).mostra == false) {
+          meteoro.get(j).y = -30;
+        }
+        if (meteoro.get(j).y > 0) {
+          ponto2++;
+        }
+        if (ponto2>=50) {
+          ponto+= 1;
+          ponto2 = 0;
+        }
+      }
+    }
+  }
+}
+void cria_meteoro() {
+  if (frameCount%30==0) {
+    meteoro.add(new Meteoro(0, 2));
+  }
+}
+
+class Meteoro{
+  float x, y, dx, dy, a, b, tempo, r, cor_a,cor_a2, cor_a3;
+  boolean mostra = true;
+  boolean ferido;
+  boolean hit;
+  boolean cor_A;
+  
+  Meteoro(float nx, float ny){
+    dx = nx;
+    dy = ny;
+    a = (int) random(0, 600);
+    b = (int) random(-300, 0);
+    x= a;
+    y= b;
+    r= 10;
+    cor_a = 255;
+    cor_a2 = 255;
+    cor_a3 = 255;
+  }
+  void mostra_Meteoro(){
+   y+= dy;
+    //if( y> height){
+    //  mostra = true;
+    //  a = (int) random(0, 600); //x do meteoro
+    //  b = (int) random(-300, 0); //y do meteoro
+    //   x = a;
+    //   y = b;
+    //}
+    if( y <= -30){
+      mostra = true;
+      a = (int) random(0, 600); //x do meteoro
+      b = (int) random(-300, 0); //y do meteoro
+       x = a;
+       y = b;
+    }
+    if(mostra){
+    
+    if(this.cor_A == true){
+      this.cor_a = (int) random(0, 255);
+      this.cor_a2 = (int) random(0, 255);
+      this.cor_a3 = (int) random(0, 255);
+      this.cor_A = false;
+    }
+    fill(cor_a, cor_a2, cor_a3);
+    circle(x, y, r*2);
+    }
+  }
+  boolean collision(Nave a){
+    hit = circleRect(this.x, this.y, this.r, a.x, a.y, a.w, a.h);
+    if(hit){
+      return true;
+    }else{
+      return false;
+    }
+  }
+}
+
+class Nave {
+  int xspeed, yspeed, x, y, w, h, cor, cor2, cor3, tempo;
+  boolean cor_A;
+  Nave(int dx, int dy) {
+    xspeed = dx;
+    yspeed = dy;
+    w=20;
+    h=30;
+    cor = 255;
+  }
+  void mostra_nave() {
+    x = xspeed;
+    y = yspeed;
+    if (keyPressed == true) {
+      if (keyCode == UP) {
+        yspeed-= 2;
+      }
+      if (keyCode == DOWN) {
+        yspeed+= 2;
+      }
+      if (keyCode == RIGHT) {
+        xspeed+= 2;
+      }
+      if (keyCode == LEFT) {
+        xspeed-= 2;
+      }
+    }
+    if (xspeed >= width-20) {
+      xspeed = 580;
+    }
+    if (xspeed <= 0) {
+      xspeed = 0;
+    }
+    if (yspeed <= 0) {
+      yspeed = 0;
+    }
+    if (yspeed >= height-30) {
+      yspeed = 370;
+    }
+    if(this.cor_A == true){
+      
+      this.w = 40;
+      this.h = 60;
+      MEF = true;
+      
+      //if(tempo == 1){
+      this.cor = (int) random(0, 255);
+      this.cor2 = (int) random(0, 255);
+      this.cor3 = (int) random(0, 255);
+      //}
+     tempo++;
+      if(tempo>=180){
+        MEF = false;
+        tempo=0;
+        this.cor_A = false;
+        this.w = 20;
+        this.h = 30;
+      }
+    }
+    fill(cor, cor2, cor3);
+    rect(x, y, w, h);
+  }
+}
+
+
+void titulo() {
+  textFont(font, 30);
+  fill(255);
+  text("Asteroid: Arcade Game", width/5-35, height/7*3);
+}
+
+class Button {
+  PVector Pos =  new PVector(0, 0);
+  float Width = 0;
+  float Height = 0;
+  color Colour;
+  String Text;
+  Boolean Pressed = false;
+  Boolean Clicked = false;
+
+  //constructor
+  Button(float x, int y, int w, int h, int c) {
+    Pos.x = x;
+    Pos.y = y;
+    Width = w;
+    Height = h;
+    Colour = c;
+  }
+  void update() {    
+    if (mousePressed == true && mouseButton == LEFT && Pressed == false) {
+      Pressed = true;
+      if (mouseX >= Pos.x-35 && mouseX <=Pos.x+Width && //delimitar o tamanho da área do click;
+      mouseY >= Pos.y-25 && mouseY <=Pos.y+Height) {
+        Clicked = true;
+      }
+    } else {
+      Pressed = false;
+      Clicked = false;
+    }
+  }
+  void render(){ //mostra botão start
+    fill(Colour);
+    rect(Pos.x-35, Pos.y-25, Width, Height);
+    
+    textFont(font, 15);
+    fill(0);
+    text("Start", Pos.x, Pos.y);
+  }
+  
+  Boolean isClicked(){ // retorna se está clicando ou não;
+    return Clicked;
+  }
+}
+
+class Tiro {
+  int x, y, dx, dy, conta, r;
+  Tiro(int nx, int ny) {
+    x= nx;
+    y= ny;
+    r= 4;
+    dy = 5;
+  }
+  void mostra_Tiro() {
+    fill(255);
+    noStroke();
+    ellipse(this.x, this.y, r*2, r*2);
+  }
+  void move() {
+    y -= dy;
+  }
+  
+  boolean hits(Meteoro meteoro) {
+    float a = dist(tiros.x, tiros.y, meteoro.x, meteoro.y);
+    if (a < tiros.r + meteoro.r) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
+
+// CIRCLE/RECTANGLE
+boolean circleRect(float cx, float cy, float radius, float rx, float ry, float rw, float rh) {
+  // temporary variables to set edges for testing
+  float testX = cx;
+  float testY = cy;
+
+  // which edge is closest?
+  if (cx < rx) {
+    testX = rx; // test left edge
+  } else if (cx > rx+rw) {
+    testX = rx+rw; // right edge
+  }
+
+  if (cy < ry) {
+    testY = ry; // top edge
+  } else if (cy > ry+rh) {
+    testY = ry+rh;
+  }  // bottom edge
+
+  // get distance from closest edges (pitágoras)
+  float distX = cx-testX;
+  float distY = cy-testY;
+  float distance = sqrt( (distX*distX) + (distY*distY) );
+
+  // if the distance is less than the radius, collision!
+  if (distance <= radius) {
+    return true;
+  }
+  return false;
+}
+
+class Power_up{
+  float x, y, dx, dy, a, b, tempo, r;
+  boolean mostra = true;
+  boolean hit;
+  
+  Power_up(float nx, float ny){
+    dx = nx;
+    dy = ny;
+    a = -10;
+    b = (int) random(0, 400);
+    x= a;
+    y= b;
+    r= 5;
+    tempo = (int) random(0, 10);
+    
+  }
+  void mostra_Power_up(){    
+   x+= dx;
+    if (this.x >= width) {
+    dx = -dx;
+  }
+    if(mostra)
+    fill(255);
+    circle(x, y, r*2);
+    
+  }
+  boolean collision(Nave a){
+    hit = circleRect(this.x, this.y, this.r, a.x, a.y, a.w, a.h);
+    if(hit){
+      return true;
+    }else{
+      return false;
+    }
+  }
+}
+
+
+
+
+
+
+
