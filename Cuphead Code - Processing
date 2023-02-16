@@ -1,0 +1,759 @@
+boolean lado;
+int fase = 0;
+int tempo1 = 0;
+boolean tiroBatata = false;
+
+Tiro tiros;
+
+ArrayList<Tiro> tiro = new ArrayList<Tiro>();
+
+Batata b;
+tiroBatata tirosb;
+int tempo=0;
+int ntiro = 0;
+
+ArrayList<tiroBatata> tirob = new ArrayList<tiroBatata>();
+
+Cebola c;
+tiroCebola tirosc;
+int tempoc=0;
+int ntiroc = 0;
+
+ArrayList<tiroCebola> tiroc = new ArrayList<tiroCebola>();
+
+Cuphead cup;
+
+//public void settings() {
+//  size(600, 600);
+//}
+void setup() {
+  size(600, 600);
+  //map_sound = new SoundFile(this, "map_sound.mp3");
+  b = new Batata();
+  tirosb = new tiroBatata();
+  c = new Cebola();
+  tirosc = new tiroCebola();
+  cup = new Cuphead();
+  tela();
+}
+
+void draw() {
+  background(0);
+  if (fase ==0) {
+    botoes();
+  }
+  if (fase ==1) {
+    background(#66C68F);
+
+    //map_sound.rate(1);
+    //map_sound.play();
+    mapa();
+  }
+  if (fase == 2 || fase == 3) {
+    background(#8cc3c8);
+    fill(#989c50);
+    rect(0, 450, 600, 200);
+    fill(255);
+    
+    //map_sound.stop();
+    //tiros.mostra_Tiro();
+    //tiros.move();
+    //tiros.hitsb();
+    //tiros.hitsc();
+    cup.boneco();
+    cup.movimento();
+    cup.pulo();
+    t++;
+    textSize(24);
+    text("HP:",10,580);
+    text(cup.vida, 70,580);
+  }
+  if (fase == 2) {
+    cup.colidebatata();
+    bossBatata();
+  }
+
+  if (fase == 3) {
+    cup.colidecebola();
+    bossCebola();
+  }
+  if (fase == 4) {
+    Win();
+  }
+  if (fase == 5) {
+    gameover();
+  }
+  if (fase == 6) {
+    gameover2();
+  }
+  if (fase == 7 || fase ==8) {
+    creditos();
+  }
+}
+
+void keyReleased() {
+  if (keyCode == UP && cup.y>=450) {
+    cup.estadopulo=cup.pulo;
+  }
+  cup.dash();
+}
+
+int t =0;
+void keyPressed() {
+  if (t>=10) {
+    if (key == 'z') {
+      cup.estado=cup.atirando;
+      if (lado == true) {
+        tiro.add(new Tiro(cup.x+20, cup.y, lado));
+      } else {
+        tiro.add(new Tiro(cup.x-70, cup.y, lado));
+      }
+
+      t=0;
+    }
+  }
+}
+class Cuphead {
+  int x;
+  int y;
+
+  int estadopulo;
+  int estadolado;
+
+  int estado;
+  int parado;
+  int andando;
+  int atirando;
+
+  int direita;
+  int esquerda;
+  int gravidade;
+  int pulo;
+  int solo;
+  int dash;
+  int tamanho;
+
+  int vida;
+
+  PImage imgparado;
+  PImage imgatirando;
+  PImage imgatirando1;
+  PImage imgandando1;
+  PImage imgandando2;
+  Cuphead() {
+    x=50;
+    y = 450;
+    direita = 1;
+    esquerda = 0;
+    gravidade = 5;
+    pulo=1;
+    solo=0;
+    dash=150;
+    tamanho = 50;
+    vida = 3;
+
+    imgparado = loadImage("sprite_parado.png");
+    imgatirando = loadImage("sprite_atirando.png");
+    imgatirando1 = loadImage("sprite_atirando1.png");
+    imgandando1 = loadImage("sprite_andando01.png");
+    imgandando2 = loadImage("sprite_andando02.png");
+
+
+    parado=0;
+    atirando=3;
+    andando=0;
+  }
+
+  void vida() {
+    if (vida<=0) {
+      if (fase == 2) {
+        fase=5;
+      }
+      if (fase == 3) {
+        fase=6;
+      }
+      vida=0;
+    }
+  }
+
+  void boneco() {
+    
+    //rect(x, y-40, tamanho, tamanho);
+
+    if (estado==andando) {
+      andando++;
+      if (andando==1) {
+        image(imgandando1, x, y-80, imgandando1.width/2, imgandando1.height/2);
+      } else if (andando==2) {
+        image(imgandando2, x, y-80, imgandando2.width/2, imgandando2.height/2);
+        andando=0;
+      }
+    } else if (estado==atirando) {
+      if (estadolado==esquerda) {
+        image(imgatirando1, x, y-80, imgatirando.width/2, imgatirando.height/2);
+      } else {
+        image(imgatirando, x, y-80, imgatirando.width/2, imgatirando.height/2);
+      }
+    } else {
+      image(imgparado, x, y-80, imgparado.width/2, imgparado.height/2);
+    }
+  }
+
+  void colidebatata() {
+    if (this.x+64>=b.x) {
+      this.x-=30;
+      vida--;
+      vida();
+    }
+  }
+
+  void colidecebola() {
+    if (this.x+64>=c.x-95 && this.x<=c.x+95) {
+      this.x-=30;
+      vida--;
+      vida();
+    }
+  }
+
+  void pulo() {
+    if (estadopulo == pulo) {
+      y-=gravidade;
+    } else if (estadopulo == solo && y<=450) {
+      y+=gravidade;
+    }
+    if (y==320) {
+      estadopulo=solo;
+    }
+  }
+
+  void movimento() {
+    if (keyPressed) {
+      if (keyCode == LEFT && x>0) {
+        x-=4;
+        estadolado = esquerda;
+        lado = false;
+        estado=andando;
+      }
+      if (keyCode == RIGHT && x+tamanho<width) {
+        x+=4;
+        estadolado = direita;
+        lado = true;
+        estado=andando;
+      }
+    }
+  }
+
+  void dash() {
+    if (key == ' ') {
+      if (estadolado == direita) {
+        if (x>=width-dash) {
+          x=width-tamanho;
+        } else {
+          x+=dash;
+        }
+      } else if (estadolado == esquerda) {
+        if (x<=0+dash) {
+          x=0;
+        } else {
+          x-=dash;
+        }
+      }
+    }
+  }
+}
+int win;
+PImage wingame;
+Button respawn;
+Button restart;
+Button voltar;
+void Win() {
+  background(0);
+  textFont(font2, 110);
+  textAlign(CENTER);
+  fill(255);
+  pushMatrix();
+  translate(0, 0);
+  text("A\n KNOCKOUT! ", width/2, height/7*2);
+  popMatrix();
+  textAlign(CORNER);
+  respawn = new Button(width/5*2.2, height/7*4+50, 130, 40, "Voltar", -5, 17);
+  respawn.update();
+  respawn.render();
+  if (respawn.isClicked()) {
+    fase = 1;
+  }
+}
+
+void gameover() {
+  background(0);
+  textFont(font2, 110);
+  fill(255);
+  pushMatrix();
+  translate(0, 0);
+  text("Game Over ", width/3-130, height/7*2);
+  popMatrix();
+  restart = new Button(width/5*2.2, height/7*4+50, 130, 40, "Reiniciar", -20, 17);
+  restart.update();
+  restart.render();
+  if (restart.isClicked()) {
+    c.xv=width-80;
+    b.xv=width-80;
+    cup.vida=3;
+    fase = 2;
+  }
+}
+void gameover2() {
+  background(0);
+  textFont(font2, 110);
+  fill(255);
+  pushMatrix();
+  translate(0, 0);
+  text("Game Over ", width/3-130, height/7*2);
+  popMatrix();
+  restart = new Button(width/5*2.2, height/7*4+50, 130, 40, "Reiniciar", -20, 17);
+  restart.update();
+  restart.render();
+  if (restart.isClicked()) {
+    c.xv=width-80;
+    b.xv=width-80;
+    cup.vida=3;
+    fase = 3;
+  }
+}
+void creditos() {
+   background(0);
+  textFont(font2, 85);
+  fill(255);
+  pushMatrix();
+  translate(0, 80);
+  text("Criadores: ", 100, 85);
+  textFont(font, 15);
+  text("MICKAEL CASTRO: @koal_castro", 145, 160);
+  text("NATAN FONSECA: @n.a_tan", 165, 190);
+  text("SISTEMAS E MÍDIAS DIGITAIS", 155, 270);
+  text("M.A.M.I. - MATEMÁTICA APLICADO A MULTIMÍDIA", 70, 300);
+  popMatrix();
+  voltar = new Button(width/5*2.2, height/7*4+110, 130, 40, "Voltar", -5, 17);
+  voltar.update();
+  voltar.render();
+  if (voltar.isClicked()) {
+    fase = 0;
+  }
+}
+class Batata {
+  int x, y, xv,flag;
+  PImage batata;
+  PImage batata2;
+  PImage nuvem;
+
+  Batata() {
+    batata = loadImage("potato2.png");
+    batata2 = loadImage("potato3.png");
+    nuvem = loadImage("nuvem.png");
+    x = width-180;
+    y = height/2;
+    xv= width-80;
+ 
+  }
+  void mostraVida() {
+    rect(40, 20, xv, 30);
+    if (xv<=0) {
+      fase = 4;
+      flag=1;
+    }
+  }
+  void mostraBatata() {
+    image(nuvem, 220, 80, 110, 110);
+    image(nuvem, 360, 120, 110, 110);
+    image(nuvem, -40, 120, 110, 110);
+    image(nuvem, 490, 60, 110, 110);
+    image(nuvem, 70, 60, 110, 110);
+
+    if (tiroBatata == true) {
+      image(batata2, x-15, y-15, 200, 200);
+    } else {
+      image(batata, x-15, y-15, 200, 200);
+    }
+  }
+}
+
+class tiroBatata {
+  int  x, dx, dy, r;
+  PImage terra;
+
+  tiroBatata() {
+    terra = loadImage("terra.png");
+    dx = b.x;
+    dy = b.y+110;
+    r = 60;
+    x = 4;
+  }
+
+  void mostraTiro() {
+
+    dx-=x;
+    image(terra, dx, dy, r, r);
+  }
+
+  void cupheadcolide() {
+    if (this.dx<=cup.x+cup.tamanho && this.dx+this.r>=cup.x) {
+      if (cup.y-40+cup.tamanho>=dy) {
+        cup.vida--;
+        cup.vida();
+        tirob.remove(tirosb);
+      }
+    }
+  }
+}
+class Cebola {
+  PImage cebola1;
+  PImage cebola2;
+
+  int x, y, xv,flag;
+
+  Cebola() {
+    x = width/2;
+    y = height/2;
+    xv= width-80;
+
+    cebola1 = loadImage("cebola1.png");
+    cebola2 = loadImage("cebola2.png");
+  }
+  void mostraVida() {
+    rect(40, 20, xv, 30);
+    if (xv<=0) {
+      fase = 4;
+      flag=1;
+    }
+  }
+  void mostraCebola() {
+
+    tempo1++;
+    if (tempo1<=60) {
+      image(cebola2, x-cebola2.width/2, y-cebola2.height/4, cebola2.width, cebola2.height);
+    }
+    if (tempo1>60 && tempo1<=150) {
+      image(cebola1, x-cebola1.width/2, y-cebola2.height/4, cebola1.width, cebola1.height);
+    }
+    if (tempo1>150) {
+      tempo1=0;
+    }
+  }
+}
+
+class tiroCebola {
+  int  y, dxesq, dxdir, dy, r;
+  tiroCebola() {
+    dxesq = int(random(0, width/2-75));
+    dxdir = int(random(width/2+75, width));
+    dy = 0;
+    r = 15;
+    y = 7;
+    
+  }
+  void mostraTiro() {
+    dy+=y;
+    fill(#b4eff2);
+    rect( dxesq, dy, r/1.5, r*2);
+    rect( dxdir, dy, r/1.5, r*2);
+  }
+
+  void cupheadcolide() {
+    if (this.dxesq >= cup.x && this.dxesq+r/1.5 <= cup.x+cup.tamanho || this.dxdir >= cup.x && this.dxdir+r/1.5 <= cup.x+cup.tamanho) {
+      if (cup.y-40<=this.dy+r*2 && cup.y-40+cup.tamanho>=this.dy) {
+        cup.vida--;
+        cup.vida();        
+        tiroc.remove(tirosc);
+      }
+    }
+  }
+}
+void bossBatata() {
+  b.mostraBatata();
+  b.mostraVida();
+
+  for (int i=0; i<tiro.size(); i++) {
+    tiros = tiro.get(i);
+    tiros.mostra_Tiro();
+    tiros.move();
+    tiros.hitsb();
+    
+  }
+
+  if (ntiro<3) {
+    if (tempo>60) {
+      tirob.add(new tiroBatata());
+      ntiro++;
+      tempo=0;
+    }
+  }
+  if (tempo>180) {
+    ntiro=0;
+  }
+  if (ntiro>0 && tempo<60) {
+    tiroBatata = true;
+  } else {
+    tiroBatata = false;
+  }
+  for (int i=0; i<tirob.size(); i++) {
+    tirosb = tirob.get(i);
+    tirosb.mostraTiro();
+    tirosb.cupheadcolide();
+  }
+  tempo++;
+}
+void bossCebola() {
+  c.mostraCebola();
+  c.mostraVida();
+
+  for (int i=0; i<tiro.size(); i++) {
+    tiros = tiro.get(i);
+    tiros.mostra_Tiro();
+    tiros.move();
+    tiros.hitsc();   
+  }
+
+  if (ntiroc<10) {
+    tempoc++;
+    if (tempoc>30) {
+      tiroc.add(0, new tiroCebola());
+      ntiroc++;
+      tempoc=0;
+    }
+
+    if (ntiroc>=10) {
+      ntiroc=0;
+    }
+    for (int i=0; i<tiroc.size(); i++) {
+      tirosc = tiroc.get(i);
+      tirosc.mostraTiro();
+      tirosc.cupheadcolide();
+    }
+  }
+}
+class Button {
+  PVector Pos =  new PVector(0, 0);
+  float Width = 0;
+  float Height = 0;
+  String Text;
+  Boolean Pressed = false;
+  Boolean Clicked = false;
+  int b;
+  int m;
+
+  //constructor
+  Button(float x, int y, int w, int h, String p, int ba, int ma) {
+    Pos.x = x;
+    Pos.y = y;
+    Width = w;
+    Height = h;
+    Text = p;
+    b = ba;
+    m = ma;
+  }
+  
+  
+  void update() {
+    if (mousePressed == true && mouseButton == LEFT && Pressed == false) {
+      Pressed = true;
+      if (mouseX >= Pos.x-35 && mouseX <=Pos.x+Width && mouseY >= Pos.y-55 && mouseY <=Pos.y+Height-20) {
+        Clicked = true;
+      }
+    } else {
+      Pressed = false;
+      Clicked = false;
+    }
+  }
+  void render(){
+    fill(200);
+    rect(Pos.x-35, Pos.y-25, Width, Height);
+    
+    textFont(font, m);
+    fill(0);
+    text(Text, Pos.x+b, Pos.y);
+  }
+  
+  Boolean isClicked(){
+    return Clicked;
+  }
+}
+
+//SoundFile map_sound;
+class Mapa {
+  PImage mugman;
+  PImage batata;
+  PImage cebola;
+  PImage flag;
+  int x, y;
+  Mapa() {
+    x=0;
+    y=0;
+  }
+  void personagem() {
+    if (keyPressed) {
+      if (keyCode == LEFT && x>0) {
+        x-=5;
+      }
+      if (keyCode == RIGHT && x+30<width) {
+        x+=5;
+      }
+      if (keyCode == UP && y>0) {
+        y-=5;
+      }
+      if (keyCode == DOWN && y+30<height) {
+        y+=5;
+      }
+    }
+
+    image(cuphead, x, y, 50, 50);
+  }
+  void mapa() {
+    mugman = loadImage("mugman_.png");
+    batata = loadImage("potato2.png");
+    cebola = loadImage("cebola2.png");
+    flag = loadImage("flag1.png");
+    fill(#DBB189);
+    noStroke();
+    rect(0, 0, 50, 70);
+    rect(0, 70, 430, 50);
+    rect(width/2, 70, 50, 400);
+    rect(width/2-130, 420, 150, 50);
+
+
+    rect(430, 38, 90, 90);
+    rect(80, 385, 90, 90);
+
+
+
+
+    image(batata, 435, 40, 80, 80);
+    image(cebola, 85, 390, 80, 80);
+
+    if (b.flag==1) {
+      image(flag, 500, 50, 80, 80);
+    }
+    if (c.flag==1) {
+      image(flag, 150, 397, 80, 80);
+    }
+
+    if (b.flag==1 && c.flag==1) {
+      rect(430, 385, 90, 90);
+      image(mugman, 435, 390, 80, 80);
+    }
+
+    fill(255);
+  }
+  void colisao() {
+    if (x>= 430 && x+50<=520 && y>= 38 && y+50<=128) {
+      if (keyPressed && key == ENTER) {
+        fase=2;
+      }
+    }
+    if (x >= 80 && x+50<=170 && y>= 385 && y+50<=475) {
+      if (keyPressed && key == ENTER) {
+        fase=3;
+      }
+    }
+    if (b.flag==1 && c.flag==1) {
+      if (x >= 430 && x+50<=520 && y>= 385 && y+50<=475) {
+        if (keyPressed && key == ENTER) {
+          fase=8;
+        }
+      }
+    }
+  }
+}
+PFont font;
+PFont font2;
+PImage cabeca;
+PImage cabeca2;
+PImage cenario;
+PImage cuphead;
+
+//import processing.sound.*;
+//SoundFile music;
+//SoundFile menu;
+
+boolean start=false;
+
+Button startbutton;
+Button optionbutton;
+Mapa tela1;
+
+
+void tela() {
+  cabeca = loadImage("cuphead.png");
+  cabeca2 = loadImage("Mugman.png");
+  cenario = loadImage("capa.png");
+  cuphead = loadImage("cuphead_.png");
+  font = createFont("atari-abandoned.ttf", 25);
+  font2 = createFont("AtariST8x16SystemFont.ttf", 25);
+  //music = new SoundFile(this, "CupheadMusic.mp3");
+ // menu = new SoundFile(this, "Menu2_sound.mp3");
+  //music.play();
+  tela1 = new Mapa();
+  startbutton = new Button(width/5*2.2, height/7*4, 130, 40, "Start", 0,15);
+  optionbutton = new Button(width/5*2.2, height/7*4+50, 130, 40, "Creditos", -8,15);
+}
+
+void botoes() {
+    titulo();
+    pushMatrix();
+    translate(0, -20);
+    startbutton.update();
+    startbutton.render();
+    optionbutton.update();
+    optionbutton.render();
+    popMatrix();
+
+    if (startbutton.isClicked()) {
+      //b_music.play();
+      //music.stop();
+      //music.stop();
+      //menu.play();
+      fase = 1;
+  } 
+  
+   if (optionbutton.isClicked()) {
+      //b_music.play();
+      //music.stop();
+      //music.stop();
+      //menu.play();
+      fase = 7;
+  }
+  
+}
+void titulo() {
+  //pushMatrix();
+  //translate(-30, height/2-90);
+  //rotate(50);
+  //image(cabeca, 0, 60, 256, 256);
+  //popMatrix();
+  
+  //pushMatrix();
+  //rotate(-50);
+  //image(cabeca2, width/2+90, 50, 256,256);
+  //popMatrix();
+  
+ image(cenario, 10 , 0, 580, 600);
+  
+  textFont(font2, 110);
+  fill(255);
+  pushMatrix();
+  translate(0, 0);
+  text("CUPHEAD ", width/3-93, height/7*2);
+  fill(200, 200, 0);
+  textFont(font, 20);
+  text("Don't Deal With ", width/3-10, height/7*3-5-40);
+  fill(200, 200, 0);
+  text("The ", width/3+30, height/7*3-25);
+  fill(#B7122B);
+  text("    Devil ", width/3+30, height/7*3-25);
+  popMatrix();
+}
+
+void mapa(){
+  tela1.mapa();
+  tela1.personagem();
+  tela1.colisao();
+}
